@@ -1,0 +1,7 @@
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: 'WebApi1Telemetry'
+    static_configs:
+      - targets: ['WebApi1Telemetry:80']
