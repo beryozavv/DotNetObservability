@@ -7,7 +7,7 @@ public class RabbitMqSettings
     public string Username { get; set; }
     public string Password { get; set; }
     public ushort Port { get; set; } = 5672;
-    public bool UseSSL { get; set; } = false;
+    public bool UseSsl { get; set; } = false;
 }
 
 // Класс для хранения настроек MassTransit

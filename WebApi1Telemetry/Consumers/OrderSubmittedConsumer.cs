@@ -31,9 +31,9 @@ public class OrderSubmittedConsumer : IConsumer<OrderSubmitted>
             var order = await _dbContext.Orders.Include(o => o.Items)
                 .SingleOrDefaultAsync(o => o.Id == message.OrderId, context.CancellationToken);
 
-            var orderMarker = await _api2TelClient.GetOrderMarker(order.Id);
+            var orderMarker = await _api2TelClient.GetOrderMarker(order!.Id);
 
-            order!.SubmittedAt = DateTime.UtcNow;
+            order.SubmittedAt = DateTime.UtcNow;
             order.Submitter = message.Submitter;
             order.OrderMarker = orderMarker;
             order.FeedbackEmail = message.FeedbackEmail;

@@ -80,6 +80,11 @@ public class UserController : ControllerBase
 
         var weatherForecast = await api2TelClient.GetResourceAsync();
 
+        if (user == null)
+        {
+            return NotFound(id);
+        }
+        
         var userForecast = new UserForcast(user, weatherForecast);
 
         return Ok(userForecast);

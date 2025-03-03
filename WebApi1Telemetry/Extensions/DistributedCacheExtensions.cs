@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -7,7 +8,7 @@ namespace WebApi1Telemetry.Extensions;
 
 public static class DistributedCacheExtensions
 {
-    private static readonly SemaphoreSlim CacheLock = new SemaphoreSlim(1, 1);
+    private static readonly ConcurrentDictionary<string, SemaphoreSlim> CacheLocks = new();
 
     public static async Task<TItem?> GetOrCreateAsync<TItem>(
         this IDistributedCache cache,
@@ -22,7 +23,10 @@ public static class DistributedCacheExtensions
             return Deserialize<TItem>(cachedData);
         }
 
-        await CacheLock.WaitAsync();
+        // Получаем или создаем семафор для данного ключа
+        var cacheLock = CacheLocks.GetOrAdd(key, _ => new SemaphoreSlim(1, 1));
+
+        await cacheLock.WaitAsync();
         try
         {
             // Повторно проверяем кэш после блокировки
@@ -45,7 +49,13 @@ public static class DistributedCacheExtensions
         }
         finally
         {
-            CacheLock.Release();
+            cacheLock.Release();
+
+            // Удаляем семафор из словаря, если он больше не нужен
+            if (cacheLock.CurrentCount == 1)
+            {
+                CacheLocks.TryRemove(key, out _);
+            }
         }
     }
 
