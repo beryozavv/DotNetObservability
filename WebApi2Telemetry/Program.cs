@@ -1,4 +1,8 @@
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using WebApi2Telemetry;
+using WebApi2Telemetry.Settings;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,38 +14,38 @@ builder.Services.AddSwaggerGen();
 var env = builder.Environment.EnvironmentName;
 builder.Configuration.AddJsonFile($"appsettings.{env}.json", optional: true, reloadOnChange: true);
 
-// Добавление OpenTelemetry для трассировки
-// builder.Services.AddOpenTelemetry()
-//     .WithTracing(tracing =>
-//     {
-//         tracing
-//             .AddAspNetCoreInstrumentation() // Инструментация для ASP.NET Core
-//             .AddHttpClientInstrumentation() // Инструментация для HttpClient
-//             .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("MyDotNetApp"))
-//             .AddJaegerExporter(options =>
-//             {
-//                 options.AgentHost = "jaeger"; // Хост Jaeger (из Docker Compose)
-//                 options.AgentPort = 6831; // Порт Jaeger
-//             })
-//             .AddConsoleExporter(); // Вывод трассировки в консоль (для отладки)
-//     })
-//     .WithMetrics(metrics =>
-//     {
-//         metrics
-//             .AddAspNetCoreInstrumentation() // Метрики для ASP.NET Core
-//             .AddHttpClientInstrumentation() // Метрики для HttpClient
-//             .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("MyDotNetApp"))
-//             .AddPrometheusExporter(); // Экспорт метрик в Prometheus
-//     });
+var telemetryOptions = builder.Configuration.GetSection(nameof(TelemetrySettings)).Get<TelemetrySettings>();
+
+builder.Services.AddOpenTelemetry()
+    .WithTracing(tracing =>
+    {
+        tracing
+            .AddAspNetCoreInstrumentation() // Инструментация для ASP.NET Core
+            .AddHttpClientInstrumentation() // Инструментация для HttpClient
+            .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("WebApi2Telemetry"))
+            .AddOtlpExporter(options =>
+            {
+                options.Endpoint = new Uri($"http://{telemetryOptions!.JaegerHost}:{telemetryOptions.JaegerPort}");
+            })
+            .AddConsoleExporter(); // Вывод трассировки в консоль (для отладки)
+    })
+    .WithMetrics(metrics =>
+    {
+        metrics
+            .AddAspNetCoreInstrumentation() // Метрики для ASP.NET Core
+            .AddHttpClientInstrumentation() // Метрики для HttpClient
+            .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("WebApi2Telemetry"))
+            .AddPrometheusExporter(); // Экспорт метрик в Prometheus
+    });
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
+/*if (app.Environment.IsDevelopment())
+{*/
     app.UseSwagger();
     app.UseSwaggerUI();
-}
+//}
 
 //app.UseHttpsRedirection();
 
