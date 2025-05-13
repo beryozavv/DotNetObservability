@@ -8,8 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="MassTransit.EntityFrameworkCore" Version="8.3.6" />
-        <PackageReference Include="MassTransit.RabbitMQ" Version="8.3.7-develop.2225" />
+        <PackageReference Include="MassTransit.RabbitMQ" Version="8.3.7" />
         <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.2" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.2">
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
