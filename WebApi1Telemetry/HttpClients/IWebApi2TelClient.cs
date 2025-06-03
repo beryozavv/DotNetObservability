@@ -8,5 +8,5 @@ public interface IWebApi2TelClient
     Task<WeatherForecast[]> GetResourceAsync();
 
     [Get("/getordermarker/{id}")]
-    Task<string> GetOrderMarker(Guid id);
+    Task<string> GetOrderMarker(Guid id, CancellationToken cancellationToken);
 }

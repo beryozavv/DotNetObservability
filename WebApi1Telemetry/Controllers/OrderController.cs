@@ -9,24 +9,13 @@ namespace WebApi1Telemetry.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public class OrderController : ControllerBase
+public class OrderController(IOrderService orderService, ApiDbContext context, IDistributedCache cache)
+    : ControllerBase
 {
-    private readonly IOrderService _orderService;
-    private readonly ApiDbContext _context;
-    private readonly IDistributedCache _cache;
-
-
-    public OrderController(IOrderService orderService, ApiDbContext context, IDistributedCache cache)
-    {
-        _orderService = orderService;
-        _context = context;
-        _cache = cache;
-    }
-
     [HttpPost]
     public async Task<IActionResult> CreateOrder([FromBody] Order order, CancellationToken cancellationToken)
     {
-        var orderId = await _orderService.AddNewOrder(order, cancellationToken);
+        var orderId = await orderService.AddNewOrder(order, cancellationToken);
 
         return Accepted(new { OrderId = orderId });
     }
@@ -34,7 +23,7 @@ public class OrderController : ControllerBase
     [HttpPost("{id}/submit")]
     public async Task<IActionResult> SubmitOrder(Guid id, CancellationToken cancellationToken)
     {
-        var orderId = await _orderService.SubmitOrder(id, cancellationToken);
+        var orderId = await orderService.SubmitOrder(id, cancellationToken);
 
         return Accepted(new { OrderId = orderId });
     }
@@ -44,9 +33,9 @@ public class OrderController : ControllerBase
     {
         var cacheKey = "OrdersCacheKey";
 
-        var orders = await _cache.GetOrCreateAsync(
+        var orders = await cache.GetOrCreateAsync(
             cacheKey,
-            async () => await _context.Orders.ToArrayAsync(),
+            async () => await context.Orders.ToArrayAsync(),
             new DistributedCacheEntryOptions
             {
                 AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(20)
@@ -60,11 +49,11 @@ public class OrderController : ControllerBase
     {
         var cacheKey = $"OrderItemsCacheKey_{id}";
 
-        var order = await _cache.GetOrCreateAsync(
+        var order = await cache.GetOrCreateAsync(
             cacheKey,
             async () =>
             {
-                var fetchedOrder = await _context.Orders
+                var fetchedOrder = await context.Orders
                     .Include(u => u.Items)
                     .SingleOrDefaultAsync(u => u.Id == id);
 

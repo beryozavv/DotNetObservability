@@ -50,6 +50,7 @@
   redis:
     image: redis:latest
     container_name: redis
+    command: redis-server --requirepass "yourpassword"
     volumes:
       - redis_data:/data
     ports:
